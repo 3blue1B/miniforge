@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iris Flower Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        .result h2 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .error {
+            background-color: #ffebee;
+            border-left-color: #c62828;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 Iris Flower Prediction</h1>
+        
+        <form method="POST" action="/predict">
+            <div class="form-group">
+                <label for="sepal_length">Sepal Length (cm):</label>
+                <input type="number" id="sepal_length" name="sepal_length" step="0.1" required 
+                       value="{{ sepal_length or '' }}" placeholder="e.g., 5.1">
+            </div>
+            
+            <div class="form-group">
+                <label for="sepal_width">Sepal Width (cm):</label>
+                <input type="number" id="sepal_width" name="sepal_width" step="0.1" required 
+                       value="{{ sepal_width or '' }}" placeholder="e.g., 3.5">
+            </div>
+            
+            <div class="form-group">
+                <label for="petal_length">Petal Length (cm):</label>
+                <input type="number" id="petal_length" name="petal_length" step="0.1" required 
+                       value="{{ petal_length or '' }}" placeholder="e.g., 1.4">
+            </div>
+            
+            <div class="form-group">
+                <label for="petal_width">Petal Width (cm):</label>
+                <input type="number" id="petal_width" name="petal_width" step="0.1" required 
+                       value="{{ petal_width or '' }}" placeholder="e.g., 0.2">
+            </div>
+            
+            <button type="submit">Predict Species</button>
+        </form>
+        
+        {% if prediction %}
+        <div class="result">
+            <h2>Prediction Result:</h2>
+            <p><strong>Species:</strong> {{ prediction }}</p>
+            <p><strong>Input:</strong> [{{ sepal_length }}, {{ sepal_width }}, {{ petal_length }}, {{ petal_width }}]</p>
+        </div>
+        {% endif %}
+        
+        {% if error %}
+        <div class="result error">
+            <h2>Error:</h2>
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
