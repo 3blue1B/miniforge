@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import os
 
 app = Flask(__name__)
 
@@ -19,9 +20,13 @@ class Model(nn.Module):
         x = self.out(x)
         return x
 
-# Load trained model (from lea1.py)
+# Load trained model
 torch.manual_seed(42)
 model = Model()
+model_path = os.path.join(os.path.dirname(__file__), 'iris_model.pth')
+if os.path.exists(model_path):
+    model.load_state_dict(torch.load(model_path, map_location='cpu'))
+    model.eval()
 
 species_map = {0: 'setosa', 1: 'versicolor', 2: 'virginica'}
 
@@ -56,4 +61,5 @@ def predict():
         return render_template('index.html', error=str(e))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

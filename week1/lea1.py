@@ -79,3 +79,7 @@ with torch.no_grad(): # no backpropagation needed
         if(pred == test_y[i].item()):  # Compare with true label
             correct += 1      
     print("Accuracy:", correct / total)
+
+# Save the trained model
+torch.save(model.state_dict(), '../iris_model.pth')
+print("Model saved to iris_model.pth")
