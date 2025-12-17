@@ -304,14 +304,12 @@
                     <i class="fas fa-paint-brush"></i>
                     <h2>Draw Your Digit</h2>
                 </div>
+                <p><strong>NOTE: Be Centred Be Centred and Be Centred!</strong></p>
                 
                 <div class="canvas-container">
                     <canvas id="drawingCanvas" width="280" height="280"></canvas>
                     
-                    <div class="brush-size">
-                        <label for="brushSize">Brush Size:</label>
-                        <input type="range" id="brushSize" min="5" max="30" value="15">
-                    </div>
+
                     
                     <div class="canvas-controls">
                         <button id="clearBtn" class="control-btn">
@@ -375,13 +373,13 @@
         const ctx = canvas.getContext('2d');
         const clearBtn = document.getElementById('clearBtn');
         const predictBtn = document.getElementById('predictBtn');
-        const brushSizeSlider = document.getElementById('brushSize');
+        //const brushSizeSlider = document.getElementById('brushSize');
         
         // Drawing state
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
-        let brushSize = parseInt(brushSizeSlider.value);
+        let brushSize = 25;
         
         // Initialize canvas
         function initCanvas() {
@@ -408,7 +406,7 @@
             
             clearBtn.addEventListener('click', clearCanvas);
             predictBtn.addEventListener('click', predictDigit);
-            brushSizeSlider.addEventListener('input', updateBrushSize);
+            //brushSizeSlider.addEventListener('input', updateBrushSize);
         }
         
         function drawGrid() {
@@ -499,10 +497,6 @@
             resetResults();
         }
         
-        function updateBrushSize() {
-            brushSize = parseInt(brushSizeSlider.value);
-            ctx.lineWidth = brushSize;
-        }
         
         function resetResults() {
             document.getElementById('predictionPlaceholder').style.display = 'block';
