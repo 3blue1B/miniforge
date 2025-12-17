@@ -1,118 +1,617 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Iris Flower Prediction</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNIST Digit Recognition</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            background-color: #f0f0f0;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
-            font-size: 14px;
         }
-        button {
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 1200px;
             width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
+            padding: 30px;
+            text-align: center;
         }
-        button:hover {
-            background-color: #45a049;
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
         }
-        .result {
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .drawing-section, .result-section {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-title {
+            color: #4f46e5;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.3rem;
+        }
+        
+        .canvas-container {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #drawingCanvas {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        .canvas-controls {
+            display: flex;
+            gap: 10px;
             margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #clearBtn {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        #clearBtn:hover {
+            background: #e2e8f0;
+        }
+        
+        #predictBtn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+        }
+        
+        #predictBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        }
+        
+        #predictBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .instructions {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
             padding: 15px;
-            background-color: #e8f5e9;
-            border-left: 4px solid #4CAF50;
-            border-radius: 4px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #0369a1;
         }
-        .result h2 {
-            margin-top: 0;
-            color: #2e7d32;
+        
+        .result-display {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-        .error {
-            background-color: #ffebee;
-            border-left-color: #c62828;
-            color: #c62828;
+        
+        .prediction-result {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #4f46e5;
+            margin: 10px 0;
+        }
+        
+        .confidence {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+        
+        .confidence.high {
+            color: #10b981;
+        }
+        
+        .confidence.medium {
+            color: #f59e0b;
+        }
+        
+        .confidence.low {
+            color: #ef4444;
+        }
+        
+        .probability-chart {
+            margin-top: 20px;
+        }
+        
+        .probability-bar {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            gap: 10px;
+        }
+        
+        .digit-label {
+            width: 30px;
+            text-align: center;
+            font-weight: bold;
+            color: #475569;
+        }
+        
+        .bar-container {
+            flex: 1;
+            height: 25px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .brush-size {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .brush-size label {
+            color: #475569;
+            font-weight: 500;
+        }
+        
+        #brushSize {
+            width: 100%;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>🌸 Iris Flower Prediction</h1>
-        
-        <form method="POST" action="/predict">
-            <div class="form-group">
-                <label for="sepal_length">Sepal Length (cm):</label>
-                <input type="number" id="sepal_length" name="sepal_length" step="0.1" required 
-                       value="{{ sepal_length or '' }}" placeholder="e.g., 5.1">
-            </div>
-            
-            <div class="form-group">
-                <label for="sepal_width">Sepal Width (cm):</label>
-                <input type="number" id="sepal_width" name="sepal_width" step="0.1" required 
-                       value="{{ sepal_width or '' }}" placeholder="e.g., 3.5">
-            </div>
-            
-            <div class="form-group">
-                <label for="petal_length">Petal Length (cm):</label>
-                <input type="number" id="petal_length" name="petal_length" step="0.1" required 
-                       value="{{ petal_length or '' }}" placeholder="e.g., 1.4">
-            </div>
-            
-            <div class="form-group">
-                <label for="petal_width">Petal Width (cm):</label>
-                <input type="number" id="petal_width" name="petal_width" step="0.1" required 
-                       value="{{ petal_width or '' }}" placeholder="e.g., 0.2">
-            </div>
-            
-            <button type="submit">Predict Species</button>
-        </form>
-        
-        {% if prediction %}
-        <div class="result">
-            <h2>Prediction Result:</h2>
-            <p><strong>Species:</strong> {{ prediction }}</p>
-            <p><strong>Input:</strong> [{{ sepal_length }}, {{ sepal_width }}, {{ petal_length }}, {{ petal_width }}]</p>
+        <div class="header">
+            <h1><i class="fas fa-brain"></i> MNIST Digit Recognizer</h1>
+            <p>Draw a digit (0-9) and watch the AI predict it!</p>
         </div>
-        {% endif %}
         
-        {% if error %}
-        <div class="result error">
-            <h2>Error:</h2>
-            <p>{{ error }}</p>
+        <div class="content">
+            <div class="drawing-section">
+                <div class="section-title">
+                    <i class="fas fa-paint-brush"></i>
+                    <h2>Draw Your Digit</h2>
+                </div>
+                
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" width="280" height="280"></canvas>
+                    
+                    <div class="brush-size">
+                        <label for="brushSize">Brush Size:</label>
+                        <input type="range" id="brushSize" min="5" max="30" value="15">
+                    </div>
+                    
+                    <div class="canvas-controls">
+                        <button id="clearBtn" class="control-btn">
+                            <i class="fas fa-eraser"></i> Clear Canvas
+                        </button>
+                        <button id="predictBtn" class="control-btn" disabled>
+                            <i class="fas fa-magic"></i> Predict Digit
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <p><strong>Tips:</strong> Draw a single digit (0-9) in the center. Make it clear and centered for best results.</p>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <div class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <h2>Prediction Results</h2>
+                </div>
+                
+                <div class="result-display">
+                    <div id="predictionPlaceholder">
+                        <p>Your prediction will appear here</p>
+                        <i class="fas fa-arrow-left" style="font-size: 2rem; color: #cbd5e1; margin-top: 10px;"></i>
+                    </div>
+                    
+                    <div id="predictionResult" style="display: none;">
+                        <p style="color: #64748b;">The AI thinks this is:</p>
+                        <div class="prediction-result" id="predictedDigit">0</div>
+                        <div class="confidence" id="confidenceText">Confidence: 0%</div>
+                    </div>
+                    
+                    <div class="loading" id="loadingSpinner">
+                        <div class="spinner"></div>
+                        <p>Analyzing your drawing...</p>
+                    </div>
+                </div>
+                
+                <div class="probability-chart">
+                    <h3 style="color: #475569; margin-bottom: 15px; font-size: 1.1rem;">Probability Distribution</h3>
+                    <div id="probabilityBars"></div>
+                </div>
+                
+                <div class="error-message" id="errorMessage">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="errorText">An error occurred</span>
+                </div>
+            </div>
         </div>
-        {% endif %}
+        
+        <div class="footer">
+            <p>Powered by PyTorch CNN | Trained on MNIST Dataset</p>
+        </div>
     </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const clearBtn = document.getElementById('clearBtn');
+        const predictBtn = document.getElementById('predictBtn');
+        const brushSizeSlider = document.getElementById('brushSize');
+        
+        // Drawing state
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let brushSize = parseInt(brushSizeSlider.value);
+        
+        // Initialize canvas
+        function initCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = brushSize;
+            
+            // Add grid for guidance
+            drawGrid();
+            
+            // Add event listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch events for mobile
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', stopDrawing);
+            
+            clearBtn.addEventListener('click', clearCanvas);
+            predictBtn.addEventListener('click', predictDigit);
+            brushSizeSlider.addEventListener('input', updateBrushSize);
+        }
+        
+        function drawGrid() {
+            ctx.strokeStyle = '#f1f5f9';
+            ctx.lineWidth = 1;
+            
+            // Draw vertical lines
+            for (let x = 0; x <= canvas.width; x += canvas.width / 10) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Draw horizontal lines
+            for (let y = 0; y <= canvas.height; y += canvas.height / 10) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Reset stroke style for drawing
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = brushSize;
+        }
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getMousePos(e);
+            [lastX, lastY] = [pos.x, pos.y];
+            predictBtn.disabled = false;
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            e.preventDefault();
+            const pos = getMousePos(e);
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+        }
+        
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            startDrawing(touch);
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            draw(touch);
+        }
+        
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+            
+            if (e.type.includes('touch')) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+        
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            predictBtn.disabled = true;
+            resetResults();
+        }
+        
+        function updateBrushSize() {
+            brushSize = parseInt(brushSizeSlider.value);
+            ctx.lineWidth = brushSize;
+        }
+        
+        function resetResults() {
+            document.getElementById('predictionPlaceholder').style.display = 'block';
+            document.getElementById('predictionResult').style.display = 'none';
+            document.getElementById('probabilityBars').innerHTML = '';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        async function predictDigit() {
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('predictionPlaceholder').style.display = 'none';
+            document.getElementById('predictionResult').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // Get canvas image data
+            const imageData = canvas.toDataURL('image/png');
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ image: imageData })
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                // Display results
+                displayResults(result);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loadingSpinner').style.display = 'none';
+            }
+        }
+        
+        function displayResults(result) {
+            const prediction = result.prediction;
+            const confidence = result.confidence;
+            const probabilities = result.probabilities;
+            
+            // Update prediction display
+            document.getElementById('predictedDigit').textContent = prediction;
+            const confidenceText = document.getElementById('confidenceText');
+            confidenceText.textContent = `Confidence: ${confidence.toFixed(1)}%`;
+            
+            // Set confidence color based on level
+            confidenceText.className = 'confidence';
+            if (confidence >= 80) {
+                confidenceText.classList.add('high');
+            } else if (confidence >= 60) {
+                confidenceText.classList.add('medium');
+            } else {
+                confidenceText.classList.add('low');
+            }
+            
+            // Show prediction result
+            document.getElementById('predictionPlaceholder').style.display = 'none';
+            document.getElementById('predictionResult').style.display = 'block';
+            
+            // Update probability bars
+            updateProbabilityBars(probabilities, prediction);
+        }
+        
+        function updateProbabilityBars(probabilities, predictedDigit) {
+            const container = document.getElementById('probabilityBars');
+            container.innerHTML = '';
+            
+            probabilities.forEach((prob, digit) => {
+                const barContainer = document.createElement('div');
+                barContainer.className = 'probability-bar';
+                
+                const digitLabel = document.createElement('div');
+                digitLabel.className = 'digit-label';
+                digitLabel.textContent = digit;
+                digitLabel.style.color = digit === predictedDigit ? '#4f46e5' : '#475569';
+                digitLabel.style.fontWeight = digit === predictedDigit ? 'bold' : 'normal';
+                
+                const barWrapper = document.createElement('div');
+                barWrapper.className = 'bar-container';
+                
+                const barFill = document.createElement('div');
+                barFill.className = 'bar-fill';
+                barFill.style.width = `${Math.min(prob, 100)}%`;
+                barFill.textContent = `${prob.toFixed(1)}%`;
+                
+                barWrapper.appendChild(barFill);
+                barContainer.appendChild(digitLabel);
+                barContainer.appendChild(barWrapper);
+                container.appendChild(barContainer);
+            });
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        // Initialize the application
+        window.addEventListener('DOMContentLoaded', initCanvas);
+    </script>
 </body>
 </html>

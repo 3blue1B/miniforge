@@ -1,34 +1,77 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os
+from PIL import Image
+import io
+import base64
+import numpy as np
+import torchvision.transforms as transforms
+import re
 
 app = Flask(__name__)
 
-# Model definition
-class Model(nn.Module):
-    def __init__(self, in_features=4, h1=8, h2=8, out_features=3):
+# Define the CNN model class (same as in your model.py)
+class ConVolutionalNetwork(nn.Module):
+    def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(in_features, h1)
-        self.fc2 = nn.Linear(h1, h2)
-        self.out = nn.Linear(h2, out_features)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=6, kernel_size=3, stride=1)
+        self.conv2 = nn.Conv2d(in_channels=6, out_channels=16, kernel_size=3, stride=1)
+        self.fc1 = nn.Linear(in_features=16*5*5, out_features=120)
+        self.fc2 = nn.Linear(in_features=120, out_features=84)
+        self.fc3 = nn.Linear(in_features=84, out_features=10)
+    
+    def forward(self, X):
+        X = F.relu(self.conv1(X))
+        X = F.max_pool2d(X, kernel_size=2, stride=2)
+        X = F.relu(self.conv2(X))
+        X = F.max_pool2d(X, kernel_size=2, stride=2)
+        X = X.view(-1, 16*5*5)
+        X = F.relu(self.fc1(X))
+        X = F.relu(self.fc2(X))
+        X = self.fc3(X)
+        return X
 
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.out(x)
-        return x
-
-# Load trained model
-torch.manual_seed(42)
-model = Model()
-model_path = os.path.join(os.path.dirname(__file__), 'iris_model.pth')
-if os.path.exists(model_path):
-    model.load_state_dict(torch.load(model_path, map_location='cpu'))
+# Load the trained model
+def load_model():
+    model = ConVolutionalNetwork()
+    model.load_state_dict(torch.load('mnist_cnn.pth', map_location=torch.device('cpu')))
     model.eval()
+    return model
 
-species_map = {0: 'setosa', 1: 'versicolor', 2: 'virginica'}
+model = load_model()
+
+# Image preprocessing function
+def preprocess_image(image_data):
+    # Remove data URL prefix if present
+    if 'base64,' in image_data:
+        image_data = image_data.split('base64,')[1]
+    
+    # Decode base64 image
+    image = Image.open(io.BytesIO(base64.b64decode(image_data))).convert('L')
+    
+    # Invert colors (MNIST has white digits on black background)
+    image = Image.eval(image, lambda x: 255 - x)
+    
+    # Resize to 28x28
+    image = image.resize((28, 28), Image.Resampling.LANCZOS)
+    
+    # Convert to numpy array
+    img_array = np.array(image)
+    
+    # Normalize to [0, 1] range
+    img_array = img_array / 255.0
+    
+    # Convert to tensor with batch dimension
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+    
+    # Add batch dimension
+    tensor = transform(img_array).unsqueeze(0)
+    tensor = tensor.to(torch.float32)
+    return tensor
 
 @app.route('/')
 def index():
@@ -37,29 +80,34 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Get input from form
-        sepal_length = float(request.form['sepal_length'])
-        sepal_width = float(request.form['sepal_width'])
-        petal_length = float(request.form['petal_length'])
-        petal_width = float(request.form['petal_width'])
+        # Get image data from request
+        data = request.get_json()
+        image_data = data['image']
+        
+        # Preprocess the image
+        input_tensor = preprocess_image(image_data)
         
         # Make prediction
-        model.eval()
         with torch.no_grad():
-            sample = torch.tensor([[sepal_length, sepal_width, petal_length, petal_width]], dtype=torch.float32)
-            output = model(sample)
-            prediction = torch.argmax(output, dim=1).item()
+            outputs = model(input_tensor)
+            probabilities = F.softmax(outputs, dim=1)
+            confidence, prediction = torch.max(probabilities, 1)
+            
+        # Format the response
+        result = {
+            'prediction': int(prediction.item()),
+            'confidence': float(confidence.item() * 100),
+            'probabilities': [float(p) * 100 for p in probabilities[0].numpy()]
+        }
         
-        species = species_map[prediction]
-        return render_template('index.html', 
-                             prediction=species,
-                             sepal_length=sepal_length,
-                             sepal_width=sepal_width,
-                             petal_length=petal_length,
-                             petal_width=petal_width)
+        return jsonify(result)
+    
     except Exception as e:
-        return render_template('index.html', error=str(e))
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/clear', methods=['POST'])
+def clear():
+    return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(debug=True, port=5000)

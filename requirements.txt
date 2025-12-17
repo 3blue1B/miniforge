@@ -1,5 +1,8 @@
 flask
 torch==2.5.0
+torchvision
 pandas
 scikit-learn
 gunicorn
+Pillow
+numpy
