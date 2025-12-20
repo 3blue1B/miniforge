@@ -1,6 +1,4 @@
-Flask
-gunicorn
-torch
-torchvision
-numpy
-Pillow
+gradio
+openai
+PyPDF2
+gtts
