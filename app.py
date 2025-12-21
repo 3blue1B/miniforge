@@ -11,23 +11,22 @@ client = OpenAI(
     api_key=api_key, 
     base_url="https://api.deepseek.com/v1"
 )
+from gtts import gTTS # Add this import at the top
+
 def summarize_and_speak(file_obj):
     if file_obj is None:
         return "Please upload a file.", None
 
     try:
-        # A. Read PDF (Using the Gradio file path)
+        # A. Read PDF
         reader = PyPDF2.PdfReader(file_obj.name)
         full_summary = ""
-        
-        # B. Loop through pages (Just like your working script)
-        # We limit to first 3 pages for speed, you can remove [:3] for everything
         for page in reader.pages[:3]: 
             page_text = page.extract_text()
             if not page_text: continue
             
             response = client.chat.completions.create(
-                model="deepseek-chat", # Using your working model name
+                model="deepseek-chat",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": f"Summarize this: {page_text}"}
@@ -35,14 +34,10 @@ def summarize_and_speak(file_obj):
             )
             full_summary += response.choices[0].message.content + "\n\n"
 
-        # C. Generate Audio for the total summary
+        # B. Generate Audio using gTTS (FREE and works with DeepSeek text)
         audio_path = "summary_audio.mp3"
-        audio_response = client.audio.speech.create(
-            model="tts-1",
-            voice="alloy",
-            input=full_summary[:4000] # TTS has a 4096 character limit!
-        )
-        audio_response.stream_to_file(audio_path)
+        tts = gTTS(text=full_summary[:2000], lang='en') # Limit text for safety
+        tts.save(audio_path)
         
         return full_summary, audio_path
 
