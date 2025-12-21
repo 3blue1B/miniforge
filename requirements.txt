@@ -1,4 +1,3 @@
 gradio
 openai
 PyPDF2
-gtts

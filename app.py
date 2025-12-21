@@ -1,13 +1,16 @@
+import os
 import gradio as gr
 import PyPDF2
 from openai import OpenAI
 
-# 1. Setup Client
-client = OpenAI(
-    api_key="sk-e7726609f4b84860bb24fd4deeaa54af",
-    base_url = "https://api.deepseek.com/v1"
-    )
+# Use an environment variable for security
+# You will set this "DEEPSEEK_API_KEY" inside the Render Dashboard
+api_key = os.environ.get("DEEPSEEK_API_KEY")
 
+client = OpenAI(
+    api_key=api_key, 
+    base_url="https://api.deepseek.com/v1"
+)
 def summarize_and_speak(file_obj):
     if file_obj is None:
         return "Please upload a file.", None
