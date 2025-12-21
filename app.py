@@ -56,4 +56,8 @@ interface = gr.Interface(
     ]
 )
 
-interface.launch(share = True)
+if __name__ == "__main__":
+    # Render provides a PORT environment variable, usually 10000
+    import os
+    port = int(os.environ.get("PORT", 7860)) 
+    interface.launch(server_name="0.0.0.0", server_port=port)
